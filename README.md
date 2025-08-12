@@ -20,7 +20,7 @@ mvn clean -U -DskipTests package
 # About the upgrade
 
 
-I used ChatGPT-5 assistance to update this plugin.
+[I used ChatGPT-5 assistance](https://chatgpt.com/share/689abd4b-ced8-800c-ad4a-182b7499dfd9) to update this plugin.
 
 If there are some changes or fixes needed, create an issue.
 
