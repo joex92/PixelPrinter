@@ -46,11 +46,35 @@ public class RGBBlockColor {
 	public static Map<MaterialData, RGBBlockValue> materialValue = new HashMap<>();
 
 	static {
-		String name = Bukkit.getServer().getClass().getName();
-		name = name.substring(name.indexOf("craftbukkit.") + "craftbukkit.".length());
-		name = name.substring(0, name.indexOf("."));
-		SERVER_VERSION = name;
-	}
+    String resolved = null;
+    try {
+        // Try the legacy CraftBukkit pattern: org.bukkit.craftbukkit.v1_21_R1.CraftServer
+        String pkg = Bukkit.getServer().getClass().getPackage().getName(); // e.g. org.bukkit.craftbukkit[.v1_21_R1]
+        int i = pkg.indexOf("craftbukkit.");
+        if (i >= 0) {
+            String rest = pkg.substring(i + "craftbukkit.".length()); // v1_21_R1 or CraftServer
+            int dot = rest.indexOf('.');
+            if (dot > 0 && rest.startsWith("v")) {
+                resolved = rest.substring(0, dot); // "v1_21_R1"
+            }
+        }
+    } catch (Throwable ignored) {
+        // fall through to fallback
+    }
+
+    if (resolved == null) {
+        // Fallback: derive from Bukkit version like "1.21.8-R0.1-SNAPSHOT" → "v1_21"
+        String bv = Bukkit.getBukkitVersion();        // e.g. "1.21.8-R0.1-SNAPSHOT"
+        String core = bv.split("-")[0];               // "1.21.8"
+        String[] parts = core.split("\\.");           // ["1","21","8"]
+        String major = parts.length > 0 ? parts[0] : "1";
+        String minor = parts.length > 1 ? parts[1] : "0";
+        resolved = "v" + major + "_" + minor;         // "v1_21"
+    }
+
+    SERVER_VERSION = resolved;
+}
+
 
 	public static RGBValue getRGBFromMatData(MaterialData m) {
 		return getRGBFromMatData(m, false);

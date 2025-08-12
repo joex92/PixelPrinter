@@ -14,31 +14,70 @@ import java.util.Optional;
 public class ReflectionUtil {
 	private static final String SERVER_VERSION;
 
-
 	static {
-		String name = Bukkit.getServer().getClass().getName();
-		name = name.substring(name.indexOf("craftbukkit.")
-				+ "craftbukkit.".length());
-		name = name.substring(0, name.indexOf("."));
-		SERVER_VERSION = name;
+			String resolved = null;
+			try {
+					// e.g. org.bukkit.craftbukkit.v1_21_R1.CraftServer  OR  org.bukkit.craftbukkit.CraftServer
+					String pkg = Bukkit.getServer().getClass().getPackage().getName();
+					int i = pkg.indexOf("craftbukkit.");
+					if (i >= 0) {
+							String rest = pkg.substring(i + "craftbukkit.".length()); // "v1_21_R1" or "CraftServer"
+							int dot = rest.indexOf('.');
+							if (dot > 0 && rest.startsWith("v")) {
+									resolved = rest.substring(0, dot); // "v1_21_R1"
+							}
+					}
+			} catch (Throwable ignored) {
+					// fall through to fallback below
+			}
+
+			if (resolved == null) {
+					// Fallback for unversioned CraftBukkit packages (modern Paper/Purpur):
+					// Build "v<major>_<minor>" from "1.21.8-R0.1-SNAPSHOT" -> "v1_21"
+					String bv = Bukkit.getBukkitVersion();       // "1.21.8-R0.1-SNAPSHOT"
+					String core = bv.split("-")[0];              // "1.21.8"
+					String[] parts = core.split("\\.");          // ["1","21","8"]
+					String major = parts.length > 0 ? parts[0] : "1";
+					String minor = parts.length > 1 ? parts[1] : "0";
+					resolved = "v" + major + "_" + minor;        // "v1_21"
+			}
+
+			SERVER_VERSION = resolved;
 	}
 
-	public static boolean isVersionHigherThan(int mainVersion,
-											  int secondVersion) {
-		String firstChar = SERVER_VERSION.substring(1, 2);
-		int fInt = Integer.parseInt(firstChar);
-		if (fInt < mainVersion)
-			return false;
-		StringBuilder secondChar = new StringBuilder();
-		for (int i = 3; i < 10; i++) {
-			if (SERVER_VERSION.charAt(i) == '_'
-					|| SERVER_VERSION.charAt(i) == '.')
-				break;
-			secondChar.append(SERVER_VERSION.charAt(i));
-		}
-		int sInt = Integer.parseInt(secondChar.toString());
-		return sInt >= secondVersion;
+
+	/**
+	 * Returns true if the current server version is >= mainVersion.secondVersion.
+	 * Example: isVersionHigherThan(1, 21) is true on 1.21.x (including R1/R2 etc).
+	 */
+	public static boolean isVersionHigherThan(int mainVersion, int secondVersion) {
+			int[] cur = parseMajorMinor(SERVER_VERSION);
+			int major = cur[0], minor = cur[1];
+			if (major != mainVersion) {
+					return major > mainVersion;
+			}
+			return minor >= secondVersion;
 	}
+
+	/** Parses "v1_21_R1", "v1_21", "1.21", or "1.21.8" into {major, minor}. */
+	private static int[] parseMajorMinor(String v) {
+			if (v == null) return new int[]{0, 0};
+			String s = v.trim();
+			if (s.isEmpty()) return new int[]{0, 0};
+
+			// Strip optional leading 'v' (e.g., "v1_21_R1")
+			if (s.charAt(0) == 'v' || s.charAt(0) == 'V') s = s.substring(1);
+
+			// Normalize separators so we can split consistently
+			s = s.replace('.', '_');
+
+			String[] parts = s.split("_"); // ["1","21","R1"] or ["1","21","8"] or ["1","21"]
+			int major = 0, minor = 0;
+			try { if (parts.length > 0) major = Integer.parseInt(parts[0]); } catch (Exception ignored) {}
+			try { if (parts.length > 1) minor = Integer.parseInt(parts[1]); } catch (Exception ignored) {}
+			return new int[]{major, minor};
+	}
+
 
 	/**
 	 * Returns the NMS class.
@@ -47,14 +86,29 @@ public class ReflectionUtil {
 	 * @return The NMS class or null if an error occurred
 	 */
 	public static Class<?> getNMSClass(String name) {
-		try {
-			return Class.forName("net.minecraft.server." + SERVER_VERSION
-					+ "." + name);
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-			return null;
-		}
+			// Legacy NMS (pre-1.17): net.minecraft.server.vX_Y_RZ.<name>
+			try {
+					return Class.forName("net.minecraft.server." + SERVER_VERSION + "." + name);
+			} catch (ClassNotFoundException ignored) {
+					// Post-1.17 Mojang-mapped packages don't use the old path.
+					// Try a couple of reasonable fallbacks; if they fail, print a helpful error.
+					try {
+							// Rarely present, but cheap to try
+							return Class.forName("net.minecraft.server." + name);
+					} catch (ClassNotFoundException ignored2) {
+							try {
+									// Many classes now live directly under net.minecraft.*
+									return Class.forName("net.minecraft." + name);
+							} catch (ClassNotFoundException e3) {
+									System.err.println("[PixelPrinter] NMS class not found: " + name +
+													" (tried legacy and unversioned lookups on " + Bukkit.getVersion() + ")");
+									e3.printStackTrace();
+									return null;
+							}
+					}
+			}
 	}
+
 
 	/**
 	 * Returns the CraftBukkit class.
@@ -63,16 +117,21 @@ public class ReflectionUtil {
 	 * @return The CraftBukkit class or null if an error occurred
 	 */
 
-	public static Class<?> getCraftbukkitClass(String name,
-											   String packageName) {
-		try {
-			return Class.forName("org.bukkit.craftbukkit." + SERVER_VERSION
-					+ "." + packageName + "." + name);
-		} catch (ClassNotFoundException e) {
-			e.printStackTrace();
-			return null;
-		}
+	public static Class<?> getCraftbukkitClass(String name, String packageName) {
+			// Try legacy versioned CraftBukkit first: org.bukkit.craftbukkit.vX_Y_RZ.<package>.<name>
+			try {
+					return Class.forName("org.bukkit.craftbukkit." + SERVER_VERSION + "." + packageName + "." + name);
+			} catch (ClassNotFoundException ignored) {
+					// Fallback: unversioned CraftBukkit (modern Paper/Purpur): org.bukkit.craftbukkit.<package>.<name>
+					try {
+							return Class.forName("org.bukkit.craftbukkit." + packageName + "." + name);
+					} catch (ClassNotFoundException e2) {
+							e2.printStackTrace();
+							return null;
+					}
+			}
 	}
+
 
 	/**
 	 * Returns the CraftBukkit class.

@@ -1,7 +1,7 @@
 main: me.zombie_striker.pixelprinter.PixelPrinter
 version: ${project.version}
 name: PixelPrinter
-api-version: 1.13
+api-version: 1.21
 commands:
   PixelPrinter:
     description: Create images using blocks
