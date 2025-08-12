@@ -3,3 +3,19 @@ PixelPrinter is a plugin that was created to test out the Library found at the f
 
 If you wish, you can check out the resource used in this plugin to color code each block with the following link:
 https://bukkit.org/threads/raw-color-values-to-material-types.413391
+
+---
+
+# Build
+
+
+```
+mvn clean -U -DskipTests package
+```
+
+---
+
+# About the upgrade
+
+
+I used ChatGPT-5 assistance to update this plugin.
