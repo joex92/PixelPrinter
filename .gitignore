@@ -1,1 +1,15 @@
 /target/
+dependency-reduced-pom.xml
+
+# IDEs (optional but recommended)
+.idea/
+*.iml
+.vscode/
+.project
+.classpath
+.settings/
+
+# OS cruft
+.DS_Store
+Thumbs.db
+
