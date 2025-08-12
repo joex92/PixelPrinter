@@ -1,6 +1,7 @@
 package me.zombie_striker.pixelprinter.util;
 
-import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
+// import com.sun.org.apache.xerces.internal.impl.dv.util.Base64;
+import java.util.Base64;
 import me.zombie_striker.pixelprinter.data.Direction;
 import me.zombie_striker.pixelprinter.util.RGBBlockColor.Pixel;
 import org.bukkit.Location;
@@ -43,7 +44,7 @@ public class SkinCreator {
 						.split("\"}],\"legacy\"")[0].split("\"}}}")[0].split("\"")[0]);
 			} catch (Error | Exception e4) {
 				linecode = 45;
-				decode = new String(Base64.decode(aaaa[1]
+				decode = new String(Base64.getDecoder().decode(aaaa[1]
 						.split("\"}],\"legacy\"")[0].split("\"}}}")[0].split("\"")[0]));
 			}
 			linecode = 49;
