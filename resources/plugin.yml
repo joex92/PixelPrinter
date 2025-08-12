@@ -1,6 +1,6 @@
+name: PixelPrinter
 main: me.zombie_striker.pixelprinter.PixelPrinter
 version: ${project.version}
-name: PixelPrinter
 api-version: 1.21
 commands:
   PixelPrinter:
@@ -22,5 +22,8 @@ permissions:
     description: Allows you to stop gifs on the server
   pixelprinter.delete:
     description: Allows you to delete images inside the /Pixelprinter/images/ directory
-author:
-  Zombie_Striker
+authors:
+  - JoeX92
+  - ZombieStriker                  # original creator
+website: https://github.com/joex92/PixelPrinter
+description: Pixel art rendering plugin for 1.21.x  

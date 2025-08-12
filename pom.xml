@@ -5,7 +5,25 @@
 
   <groupId>me.zombie_striker</groupId>
   <artifactId>PixelPrinter</artifactId>
-  <version>1.0.48</version>
+  <version>1.0.49</version>
+	<developers>
+  <developer>
+			<id>joex92</id>
+			<name>JoeX92</name>
+			<url>https://github.com/joex92</url>
+			<roles>
+				<role>maintainer</role>
+			</roles>
+		</developer>
+		<developer>
+			<id>ZombieStriker</id>
+			<name>ZombieStriker</name>
+			<url>https://github.com/ZombieStriker</url>
+			<roles>
+				<role>original-author</role>
+			</roles>
+		</developer>
+	</developers>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -32,7 +50,7 @@
   </repositories>
 
   <build>
-    <finalName>${project.name}</finalName>
+		<finalName>${project.name}-${project.version}-mc${spigot.api}</finalName>
     <defaultGoal>install</defaultGoal>
 
     <!-- keep your existing layout -->
